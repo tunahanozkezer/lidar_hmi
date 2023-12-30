@@ -2,18 +2,13 @@
 #include "ui_mainwindow.h"
 #include <serial_comm.h>
 #include <QSerialPortInfo>
-#include <hmi_interface.hpp>
 #include <QGraphicsEllipseItem>
 #include <lidarprocessor.h>
+#include <hmi_packets.hpp>
 
-struct data_to_send
-{
-    uint16_t angle;
-    uint16_t distance;
-};
-
-     QVector<LidarPoint> lidarData;
-
+QVector<LidarPoint> lidarData;
+hmi_packets::periodic hmi_packets::periodic_pack{};
+bool temizle{};
 class LidarData {
 public:
     QVector<QPointF> dataPoints; // Lidar verilerini tutan vektör
@@ -39,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     // LiDAR simülasyonu için timer'ı başlatın
     lidarTimer = new QTimer(this);
     connect(lidarTimer, SIGNAL(timeout()), this, SLOT(updateLidarData()));
-    lidarTimer->start(100); // Örnek: 50 ms'de bir güncelleme
+    lidarTimer->start(10); // Örnek: 50 ms'de bir güncelleme
 
     // QChartView'ı içerecek olan QFrame'i oluşturun
 
@@ -51,12 +46,8 @@ LidarProcessor lidarProcessor;
 // mainwindow.cpp
 void MainWindow::updateLidarData()
 {
-
-    // Lidar verilerini işle
-    lidarProcessor.processLidarData(lidarData);
-
     // İşlenmiş verileri al
-    QVector<LidarPoint> processedData = lidarProcessor.getProcessedData();
+    QVector<LidarPoint> processedData = lidarData;
 
     // Grafik üzerinde temsil et
     updateGraphicsView(processedData);
@@ -87,23 +78,48 @@ void MainWindow::updateGraphicsView(const QVector<LidarPoint>& data)
     // QGraphicsView'a sahneyi ayarlayın
     ui->graphicsView->setScene(scene);
 
+    uart_protocol::packet paket;
+    LidarPoint lidar_datas;
+    if(true == uart_protocol::unpack_packet(res,paket))
+    {
+        qDebug() << "Data Recieved";
+        hmi_packets::packet_parse(paket);
+
+        ui->distance_lbl->setText("Mesafe: " + QString::number(hmi_packets::get_distance()));
+        ui->angle_lbl->setText   ("Açı: "    + QString::number(hmi_packets::get_angle() * 0.01));
+
+        lidar_datas.angle = hmi_packets::get_angle() * 0.01;
+        lidar_datas.distance = hmi_packets::get_distance();
+        lidarData.append(lidar_datas);
+    }
+    else
+    {
+        qDebug()  << "Chekcsum";
+    }
+    res.clear();
+
 
     // Lidar verilerini grafik elemanlarına dönüştür ve ekle
     for (const LidarPoint& point : data)
     {
-        qreal x = point.distance * qCos(qDegreesToRadians(point.angle));
-        qreal y = point.distance * qSin(qDegreesToRadians(point.angle));
 
-        QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(x, y, 2, 2);
 
-        if(point.angle > 355)
+        if(point.angle > 355 || true == temizle)
         {
+            lidarData.clear();
             scene->clear();
-            QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(0, 0, 5, 5);
+            pointItem = new QGraphicsEllipseItem(0, 0, 7, 7);
             pointItem->setBrush(Qt::red);
-            scene->addItem(pointItem);
+            temizle = false;
 
         }
+        else
+        {
+            qreal x = point.distance * qCos(qDegreesToRadians(point.angle));
+            qreal y = point.distance * qSin(qDegreesToRadians(point.angle));
+            pointItem = new QGraphicsEllipseItem(x, y, 2, 2);
+        }
+
         scene->addItem(pointItem);
 
     }
@@ -133,7 +149,7 @@ void MainWindow::on_connectButton_clicked()
     }
     else
     {
-        serialManager.openPort(ui->COMCombo->currentText(), QSerialPort::Baud115200);
+        serialManager.openPort(ui->COMCombo->currentText(), QSerialPort::Baud230400);
         qDebug() << "KINGSLAYER!!";
 
 
@@ -151,34 +167,7 @@ void MainWindow::on_connectButton_clicked()
             // You can also perform any additional processing or use the data as needed
             // For example, print the received data
 
-            uart_protocol::packet paket;
-            LidarPoint lidar_datas;
-            data_to_send  veri;
-            if(res.size() > 9)
-            {
-                if(true == uart_protocol::unpack_packet(res,paket))
-                {
-                    qDebug() << "Received data: " << data;
 
-                    std::memcpy(&veri, paket.payload.data(), sizeof(data_to_send));
-
-                    QString string = "Mesafe: " + QString::number(veri.distance);
-
-
-                    ui->distance_lbl->setText(string);
-                    string = "Açı: " + QString::number(veri.angle * 0.01);
-                    ui->angle_lbl->setText(string);
-
-                    lidar_datas.angle = veri.angle * 0.01;
-                    lidar_datas.distance = veri.distance;
-                    lidarData.append(lidar_datas);
-                }
-                else
-                {
-                     qDebug()  << "Chekcsum";
-                }
-                res.clear();
-            }
         });
     }
 }
@@ -203,30 +192,47 @@ void MainWindow::on_lidar_start_btn_clicked()
 {
     static bool donu;
     uint32_t packet_size;
+    uart_protocol::packet paket{};
+
     if(donu)
     {
-         ui->lidar_start_btn->setText("Başlat");
-
+         ui->lidar_start_btn->setText("Taramayı Başlat");
+        paket = hmi_packets::packet_cmd(hmi_packets::cmd_types::STOP);
     donu = false;
     }
     else
     {
-        ui->lidar_start_btn->setText("Durdur");
-        scene->clear();
-        QGraphicsEllipseItem *pointItem = new QGraphicsEllipseItem(0, 0, 5, 5);
-        pointItem->setBrush(Qt::red);
-        scene->addItem(pointItem);
+        ui->lidar_start_btn->setText("Taramayı Durdur");
+
+        paket = hmi_packets::packet_cmd(hmi_packets::cmd_types::SCAN_INF);
+
+        temizle = true;
 
         donu = true;
     }
 
-
-    std::vector<uint8_t> dataToSend{donu, 1};
-    std::unique_ptr<uint8_t[]> packedData = uart_protocol::pack_packet(uart_protocol::control_packet, dataToSend, packet_size);
+    std::unique_ptr<uint8_t[]> packedData = uart_protocol::packet_to_ptr(paket, packet_size);
     QByteArray byteArray(reinterpret_cast<const char*>(packedData.get()), packet_size);
 
     // Veriyi seri porta gönderin
     serialManager.writeData(byteArray);
+}
 
+void MainWindow::on_grafik_temizle_btn_clicked()
+{
+     temizle = true;
+}
+
+
+void MainWindow::on_speed_btn_clicked()
+{
+    uint32_t packet_size;
+    const uart_protocol::packet paket = hmi_packets::packet_set_speed(ui->speed_tb->toPlainText().toUInt());
+
+    std::unique_ptr<uint8_t[]> packedData = uart_protocol::packet_to_ptr(paket, packet_size);
+    QByteArray byteArray(reinterpret_cast<const char*>(packedData.get()), packet_size);
+
+    // Veriyi seri porta gönderin
+    serialManager.writeData(byteArray);
 }
 

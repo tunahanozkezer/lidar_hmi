@@ -29,6 +29,10 @@ private slots:
     void updateLidarData();
     void on_lidar_start_btn_clicked();
 
+    void on_grafik_temizle_btn_clicked();
+
+    void on_speed_btn_clicked();
+
 private:
     void updateGraphicsView(const QVector<LidarPoint>& data);
     Ui::MainWindow *ui;
