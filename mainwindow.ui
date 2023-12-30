@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>LidarHMI</class>
+ <widget class="QMainWindow" name="LidarHMI">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>804</width>
-    <height>766</height>
+    <height>740</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Lidar HMI</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="accessories-calculator"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QFrame" name="horizontalFrame">
@@ -41,31 +44,6 @@
       </widget>
      </item>
     </layout>
-   </widget>
-   <widget class="QPushButton" name="grafik_temizle_btn">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>700</y>
-      <width>89</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="inputMethodHints">
-     <set>Qt::ImhNone</set>
-    </property>
-    <property name="text">
-     <string>Grafiği Temizle</string>
-    </property>
-    <property name="autoDefault">
-     <bool>false</bool>
-    </property>
-    <property name="default">
-     <bool>false</bool>
-    </property>
-    <property name="flat">
-     <bool>false</bool>
-    </property>
    </widget>
    <widget class="QWidget" name="horizontalLayoutWidget_3">
     <property name="geometry">
@@ -229,6 +207,31 @@ li.checked::marker { content: &quot;\2612&quot;; }
       </layout>
      </item>
     </layout>
+   </widget>
+   <widget class="QPushButton" name="grafik_temizle_btn">
+    <property name="geometry">
+     <rect>
+      <x>710</x>
+      <y>50</y>
+      <width>85</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="inputMethodHints">
+     <set>Qt::ImhNone</set>
+    </property>
+    <property name="text">
+     <string>Grafiği Temizle</string>
+    </property>
+    <property name="autoDefault">
+     <bool>false</bool>
+    </property>
+    <property name="default">
+     <bool>false</bool>
+    </property>
+    <property name="flat">
+     <bool>false</bool>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

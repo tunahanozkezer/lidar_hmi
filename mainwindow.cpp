@@ -21,9 +21,9 @@ public:
 
 SerialPortManager serialManager;
 std::vector<uint8_t> res;
-MainWindow::MainWindow(QWidget *parent)
+LidarHMI::LidarHMI(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::LidarHMI)
 {
     ui->setupUi(this);
 
@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
 }
 LidarProcessor lidarProcessor;
 // mainwindow.cpp
-void MainWindow::updateLidarData()
+void LidarHMI::updateLidarData()
 {
     // İşlenmiş verileri al
     QVector<LidarPoint> processedData = lidarData;
@@ -53,7 +53,7 @@ void MainWindow::updateLidarData()
     updateGraphicsView(processedData);
 }
 
-void MainWindow::updateGraphicsView(const QVector<LidarPoint>& data)
+void LidarHMI::updateGraphicsView(const QVector<LidarPoint>& data)
 {
     // Grafik üzerindeki önceki elemanları temizle
     scene->clear();
@@ -125,7 +125,7 @@ void MainWindow::updateGraphicsView(const QVector<LidarPoint>& data)
     }
 }
 
-MainWindow::~MainWindow()
+LidarHMI::~LidarHMI()
 {
     delete ui;
     serialManager.closePort();
@@ -139,7 +139,7 @@ void QByteArrayToVector(const QByteArray& byteArray, std::vector<uint8_t> &resul
 
 }
 
-void MainWindow::on_connectButton_clicked()
+void LidarHMI::on_connectButton_clicked()
 {
 
     if (serialManager.isOpen())
@@ -172,12 +172,12 @@ void MainWindow::on_connectButton_clicked()
     }
 }
 
-void MainWindow::on_refreshButton_clicked()
+void LidarHMI::on_refreshButton_clicked()
 {
     refresh_combo_box();
 }
 
-void MainWindow::refresh_combo_box()
+void LidarHMI::refresh_combo_box()
 {
     QList<QSerialPortInfo> list = serialManager.scan_ports();
     ui->COMCombo->clear();
@@ -188,7 +188,7 @@ void MainWindow::refresh_combo_box()
 }
 
 
-void MainWindow::on_lidar_start_btn_clicked()
+void LidarHMI::on_lidar_start_btn_clicked()
 {
     static bool donu;
     uint32_t packet_size;
@@ -218,13 +218,13 @@ void MainWindow::on_lidar_start_btn_clicked()
     serialManager.writeData(byteArray);
 }
 
-void MainWindow::on_grafik_temizle_btn_clicked()
+void LidarHMI::on_grafik_temizle_btn_clicked()
 {
      temizle = true;
 }
 
 
-void MainWindow::on_speed_btn_clicked()
+void LidarHMI::on_speed_btn_clicked()
 {
     uint32_t packet_size;
     const uart_protocol::packet paket = hmi_packets::packet_set_speed(ui->speed_tb->toPlainText().toUInt());

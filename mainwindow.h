@@ -9,17 +9,17 @@
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
-class MainWindow;
+class LidarHMI;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class LidarHMI : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    LidarHMI(QWidget *parent = nullptr);
+    ~LidarHMI();
 private slots:
     void on_connectButton_clicked();
 
@@ -35,7 +35,7 @@ private slots:
 
 private:
     void updateGraphicsView(const QVector<LidarPoint>& data);
-    Ui::MainWindow *ui;
+    Ui::LidarHMI *ui;
     QGraphicsScene *scene;
     QTimer *lidarTimer;
 };
