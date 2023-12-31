@@ -85,8 +85,18 @@ void LidarHMI::updateGraphicsView(const QVector<LidarPoint>& data)
         qDebug() << "Data Recieved";
         hmi_packets::packet_parse(paket);
 
-        ui->distance_lbl->setText("Mesafe: " + QString::number(hmi_packets::get_distance()));
-        ui->angle_lbl->setText   ("Açı: "    + QString::number(hmi_packets::get_angle() * 0.01));
+        ui->distance_lbl->setText("Mesafe: " + QString::number(hmi_packets::get_distance()) +"cm");
+        ui->angle_lbl->setText   ("Açı: "    + QString::number(hmi_packets::get_angle() * 0.01)+ "°" );
+
+        if(hmi_packets::periodic_pack.mot_state == hmi_packets::motor_state::Busy)
+        {
+             ui->lidar_start_btn->setText("Taramayı Durdur");
+        }
+        else
+        {
+           ui->lidar_start_btn->setText("Taramayı Başlat");
+        }
+
 
         lidar_datas.angle = hmi_packets::get_angle() * 0.01;
         lidar_datas.distance = hmi_packets::get_distance();
@@ -190,25 +200,17 @@ void LidarHMI::refresh_combo_box()
 
 void LidarHMI::on_lidar_start_btn_clicked()
 {
-    static bool donu;
-    uint32_t packet_size;
+    uint32_t packet_size{};
     uart_protocol::packet paket{};
 
-    if(donu)
+    if(hmi_packets::periodic_pack.mot_state == hmi_packets::motor_state::Busy)
     {
-         ui->lidar_start_btn->setText("Taramayı Başlat");
         paket = hmi_packets::packet_cmd(hmi_packets::cmd_types::STOP);
-    donu = false;
     }
     else
     {
-        ui->lidar_start_btn->setText("Taramayı Durdur");
-
         paket = hmi_packets::packet_cmd(hmi_packets::cmd_types::SCAN_INF);
-
         temizle = true;
-
-        donu = true;
     }
 
     std::unique_ptr<uint8_t[]> packedData = uart_protocol::packet_to_ptr(paket, packet_size);

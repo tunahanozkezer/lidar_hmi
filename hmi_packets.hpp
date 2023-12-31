@@ -31,10 +31,15 @@ public:
         SCAN_1_TIME
     };
 
+    enum motor_state{
+        Ready,
+        Busy
+    };
     struct periodic
     {
         uint16_t angle;
         uint16_t distance;
+        uint16_t  mot_state;
     };
 
 
